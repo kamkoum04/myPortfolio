@@ -28,10 +28,29 @@
   };
 </script>
 <style>
-  :root { --ease-out: cubic-bezier(0.23, 1, 0.32, 1); }
+  :root {
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+    --accent: #a35bff;
+  }
+  html { scroll-behavior: smooth; scroll-padding-top: 92px; }
   html, body { background: #0b0420; color: #ffffff; }
-  body { font-family: 'Poppins', ui-sans-serif, system-ui; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+  body { font-family: 'Poppins', ui-sans-serif, system-ui; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; overflow-x: hidden; }
   ::selection { background: #a35bff; color: #0b0420; }
+
+  /* Premium focus rings — keyboard users only, never on mouse press */
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+  :focus:not(:focus-visible) { outline: none; }
+
+  /* Refined dark scrollbar */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: #0b0420; }
+  ::-webkit-scrollbar-thumb { background: rgba(163,91,255,0.28); border-radius: 999px; border: 2px solid #0b0420; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(163,91,255,0.5); }
+
+  /* Better line breaking */
+  h1, h2, h3 { text-wrap: balance; }
+  p { text-wrap: pretty; }
 
   /* Ambient purple glow blobs (matches the Figma background gradients) */
   .ambient { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
@@ -42,26 +61,43 @@
   .ambient::after  { width: 600px; height: 600px; background: radial-gradient(closest-side, rgba(79,34,141,0.7), transparent);  top: 50%; left: -180px; }
   .ambient i       { width: 520px; height: 520px; background: radial-gradient(closest-side, rgba(56,18,109,0.6), transparent);  bottom: -160px; right: 20%; display:block; }
 
+  /* Subtle film grain — sits behind content, kills gradient banding on the dark purple */
+  .grain {
+    position: fixed; inset: 0; z-index: 1; pointer-events: none;
+    opacity: 0.04; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* Scroll-aware nav: glass bar materializes once you leave the top */
+  .site-nav {
+    border-bottom: 1px solid transparent;
+    transition: background 300ms var(--ease-out), backdrop-filter 300ms var(--ease-out), border-color 300ms var(--ease-out);
+  }
+  .site-nav[data-scrolled="true"] {
+    background: rgba(11,4,32,0.6);
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    border-bottom-color: rgba(163,91,255,0.12);
+  }
+
   /* Card with the Figma's signature purple linear gradient */
   .card-purple {
     background: linear-gradient(106deg, #130428 0.58%, #251043 16.3%, #38126d 29.3%, #261045 45.6%, #190634 54.4%);
-    border-radius: 15px;
-    box-shadow: 4px 7px 26px 0 rgba(0,0,0,0.12);
-    border: 1px solid rgba(255,255,255,0.04);
+    border-radius: 16px;
+    box-shadow: inset 0 1px 0 0 rgba(255,255,255,0.07), 0 18px 44px -16px rgba(0,0,0,0.6);
+    border: 1px solid rgba(255,255,255,0.06);
   }
   .card-soft { background: rgba(19,4,40,0.55); border: 1px solid rgba(163,91,255,0.18); backdrop-filter: blur(12px); border-radius: 18px; }
 
   /* Pill nav */
-  .nav-link { padding: 8px 14px; border-radius: 999px; transition: background 200ms var(--ease-out), color 200ms var(--ease-out); }
-  .nav-link:hover { background: rgba(163,91,255,0.15); color: #ffffff; }
+  .nav-link { padding: 8px 14px; border-radius: 999px; transition: background 200ms var(--ease-out), color 200ms var(--ease-out), transform 140ms var(--ease-out); }
   .nav-link.active { background: rgba(163,91,255,0.18); color: #fff; }
+  .nav-link:active { transform: scale(0.96); }
 
   /* Buttons */
   .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 22px; border-radius: 999px; font-weight: 500; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; transition: transform 140ms var(--ease-out), background 200ms var(--ease-out), color 200ms var(--ease-out), border-color 200ms var(--ease-out); border: 1px solid rgba(255,255,255,0.18); }
-  .btn:hover { border-color: #a35bff; background: rgba(163,91,255,0.12); }
   .btn:active { transform: scale(0.97); }
-  .btn-primary { background: #ffffff; color: #0b0420; border-color: #ffffff; }
-  .btn-primary:hover { background: #a35bff; border-color: #a35bff; color: #fff; }
+  .btn-primary { background: #ffffff; color: #0b0420; border-color: #ffffff; box-shadow: 0 8px 24px -10px rgba(255,255,255,0.4); }
 
   .display { font-weight: 700; letter-spacing: -0.02em; line-height: 1.02; }
 
@@ -77,18 +113,12 @@
   .doodle-arrow { stroke: #a35bff; fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
 
   /* Reveal */
-  .reveal { opacity: 0; transform: translateY(18px); transition: opacity 700ms var(--ease-out), transform 700ms var(--ease-out); }
-  .reveal.in { opacity: 1; transform: none; }
+  .reveal { opacity: 0; transform: translateY(16px); filter: blur(6px); transition: opacity 620ms var(--ease-out), transform 620ms var(--ease-out), filter 620ms var(--ease-out); }
+  .reveal.in { opacity: 1; transform: none; filter: blur(0); }
 
   .float-y { animation: float-y 7s ease-in-out infinite; }
   @keyframes float-y { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-14px); } }
   .glow-ring { position: absolute; inset: 10%; border-radius: 50%; background: radial-gradient(closest-side, rgba(163,91,255,0.35), transparent 70%); filter: blur(40px); z-index: 0; }
-
-  /* Skill rows */
-  .skill-row { display: grid; grid-template-columns: 110px 1fr 48px; gap: 18px; align-items: center; padding: 16px 0; border-top: 1px solid rgba(255,255,255,0.06); }
-  .skill-bar { height: 6px; background: rgba(255,255,255,0.06); border-radius: 999px; overflow: hidden; position: relative; }
-  .skill-bar > span { display: block; height: 100%; background: linear-gradient(90deg, #4f228d, #a35bff); border-radius: 999px; transform: translateX(-100%); transition: transform 1200ms var(--ease-out); }
-  .skill-bar.in > span { transform: translateX(0); }
 
   /* Marquee */
   .marquee { display: flex; gap: 56px; animation: marquee 38s linear infinite; }
@@ -103,24 +133,38 @@
   .num-h .line { flex: 1; height: 1px; background: linear-gradient(90deg, rgba(163,91,255,0.4), transparent); }
 
   /* Project card */
-  .project { position: relative; padding: 28px; border-radius: 18px; background: rgba(19,4,40,0.55); border: 1px solid rgba(163,91,255,0.18); transition: transform 240ms var(--ease-out), border-color 240ms var(--ease-out), background-color 240ms var(--ease-out); display: flex; flex-direction: column; gap: 14px; min-height: 280px; }
-  .project:hover { transform: translateY(-4px); border-color: rgba(163,91,255,0.55); background: rgba(38,16,69,0.6); }
+  .project { position: relative; padding: 28px; border-radius: 18px; background: rgba(19,4,40,0.55); border: 1px solid rgba(163,91,255,0.18); transition: transform 240ms var(--ease-out), border-color 240ms var(--ease-out), background-color 240ms var(--ease-out), box-shadow 240ms var(--ease-out); display: flex; flex-direction: column; gap: 14px; min-height: 280px; }
   .chip { font-size: 11px; padding: 4px 10px; border-radius: 999px; border: 1px solid rgba(163,91,255,0.35); color: rgba(255,255,255,0.8); letter-spacing: 0.04em; }
 
   /* Cert tile */
-  .cert { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; padding: 22px; border-radius: 16px; background: rgba(19,4,40,0.55); border: 1px solid rgba(163,91,255,0.18); transition: border-color 240ms var(--ease-out), transform 240ms var(--ease-out); }
-  .cert:hover { border-color: rgba(163,91,255,0.55); transform: translateY(-3px); }
+  .cert { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; padding: 22px; border-radius: 16px; background: rgba(19,4,40,0.55); border: 1px solid rgba(163,91,255,0.18); transition: border-color 240ms var(--ease-out), transform 240ms var(--ease-out), box-shadow 240ms var(--ease-out); }
   .cert img { width: 56px; height: 56px; object-fit: contain; filter: drop-shadow(0 6px 14px rgba(0,0,0,0.4)); }
 
-  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+  /* Hover effects only on real pointers — never sticky on touch taps */
+  @media (hover: hover) and (pointer: fine) {
+    .nav-link:hover { background: rgba(163,91,255,0.15); color: #ffffff; }
+    .btn:hover { border-color: #a35bff; background: rgba(163,91,255,0.12); }
+    .btn-primary:hover { background: #a35bff; border-color: #a35bff; color: #fff; box-shadow: 0 10px 28px -8px rgba(163,91,255,0.5); }
+    .project:hover { transform: translateY(-4px); border-color: rgba(163,91,255,0.55); background: rgba(38,16,69,0.6); box-shadow: 0 24px 50px -20px rgba(163,91,255,0.35); }
+    .cert:hover { border-color: rgba(163,91,255,0.55); transform: translateY(-3px); box-shadow: 0 18px 38px -18px rgba(163,91,255,0.3); }
+    .marquee:hover { animation-play-state: paused; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .float-y, .marquee { animation: none !important; }
+    .reveal { transform: none !important; filter: none !important; }
+    .project:hover, .cert:hover { transform: none !important; }
+  }
 </style>
 </head>
 <body>
 
 <div class="ambient" aria-hidden="true"><i></i></div>
+<div class="grain" aria-hidden="true"></div>
 
 <!-- NAV -->
-<header class="fixed top-0 left-0 right-0 z-50">
+<header class="site-nav fixed top-0 left-0 right-0 z-50">
   <nav class="mx-auto max-w-7xl px-6 lg:px-10 py-5 flex items-center justify-between">
     <a href="#top" class="flex items-center gap-2 font-semibold tracking-tight">
       <span class="inline-block w-9 h-9 rounded-full bg-gradient-to-br from-plum to-accent grid place-items-center text-sm">HK</span>
@@ -191,7 +235,7 @@
         <!-- Quick stats strip -->
         <div class="mt-10 grid grid-cols-3 max-w-md gap-4 reveal">
           <div>
-            <div class="display text-2xl md:text-3xl">5<span class="text-accent">+</span></div>
+            <div class="display text-2xl md:text-3xl">6<span class="text-accent">+</span></div>
             <div class="text-[11px] uppercase tracking-[0.18em] text-white/55 mt-1">Cloud certs</div>
           </div>
           <div class="border-l border-white/10 pl-4">
@@ -267,7 +311,7 @@
 
           <div class="grid grid-cols-3 gap-5 pt-6">
             <div>
-              <div class="display text-4xl text-white">5+</div>
+              <div class="display text-4xl text-white">6+</div>
               <div class="text-xs uppercase tracking-[0.18em] text-white/55 mt-2">Cloud certs</div>
             </div>
             <div>
@@ -526,12 +570,13 @@
         <span class="n">05.</span><h2>Certifications</h2><span class="line"></span>
       </div>
 
-      <ul class="grid grid-cols-2 md:grid-cols-5 gap-5">
+      <ul class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-5">
         <li class="cert reveal"><img src="cka.png" alt="CKA" /><div><div class="text-sm font-medium">CKA</div><div class="text-xs text-white/55 mt-1">Kubernetes Administrator</div></div></li>
         <li class="cert reveal"><img src="ckad.png" alt="CKAD" /><div><div class="text-sm font-medium">CKAD</div><div class="text-xs text-white/55 mt-1">Kubernetes App Developer</div></div></li>
         <li class="cert reveal"><img src="terraform.png" alt="Terraform Associate" /><div><div class="text-sm font-medium">Terraform Associate</div><div class="text-xs text-white/55 mt-1">HashiCorp &middot; HCTA0-003</div></div></li>
         <li class="cert reveal"><img src="rhcsa.png" alt="RHCSA" /><div><div class="text-sm font-medium">RHCSA</div><div class="text-xs text-white/55 mt-1">Red Hat System Admin</div></div></li>
-        <li class="cert reveal"><img src="aws-saa.png" alt="AWS SAA" /><div><div class="text-sm font-medium">AWS SAA-C03</div><div class="text-xs text-white/55 mt-1">Solutions Architect Associate</div></div></li>
+        <li class="cert reveal"><img src="aws-saa.png" alt="AWS Certified Solutions Architect Associate" /><div><div class="text-sm font-medium">AWS SAA-C03</div><div class="text-xs text-white/55 mt-1">Solutions Architect Associate</div></div></li>
+        <li class="cert reveal"><img src="aws-cloudops.png" alt="AWS Certified CloudOps Engineer Associate" /><div><div class="text-sm font-medium">AWS CloudOps</div><div class="text-xs text-white/55 mt-1">CloudOps Engineer Associate</div></div></li>
       </ul>
     </div>
   </section>
@@ -574,25 +619,31 @@
 </main>
 
 <script>
-  const items = document.querySelectorAll('.reveal, .skill-bar');
+  const items = document.querySelectorAll('.reveal');
   if ('IntersectionObserver' in window) {
     const io = new IntersectionObserver((entries) => {
       entries.forEach((e, i) => {
-        if (e.isIntersecting) { setTimeout(() => e.target.classList.add('in'), i * 40); io.unobserve(e.target); }
+        if (e.isIntersecting) {
+          // Stagger items entering together; cap so a full grid never feels slow.
+          setTimeout(() => e.target.classList.add('in'), Math.min(i, 6) * 55);
+          io.unobserve(e.target);
+        }
       });
     }, { threshold: 0.12 });
     items.forEach((el) => io.observe(el));
   } else { items.forEach((el) => el.classList.add('in')); }
 
+  const header = document.querySelector('.site-nav');
   const sections = ['top','about','experience','projects','contact'].map(id => document.getElementById(id)).filter(Boolean);
   const links = document.querySelectorAll('.nav-link');
-  const setActive = () => {
+  const onScroll = () => {
     const y = window.scrollY + 120; let current = 'top';
     sections.forEach((s) => { if (s.offsetTop <= y) current = s.id; });
     links.forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#' + current));
+    if (header) header.dataset.scrolled = String(window.scrollY > 12);
   };
-  window.addEventListener('scroll', setActive, { passive: true });
-  setActive();
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
 </script>
 </body>
 </html>
